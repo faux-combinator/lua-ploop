@@ -76,12 +76,8 @@ UnitTest "FauxCombinator.Parser"(function (_ENV)
   function TestExpectKOType()
     local tokens = Array[FauxCombinator.IToken]({lparen})
     local p = FauxCombinator.Parser{Tokens = tokens}
-    Assert.Error(function ()
-      Assert.Equal(p:Expect('rparen').Type, 'rpare123n')
-    end)
+      p:Expect('rparen')
   end
-  -- TODO ExceptKOType
-  -- TODO ExceptKOEOF
 end)
 
 UnitTest("FauxCombinator.Parser"):Run()

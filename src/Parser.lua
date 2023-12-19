@@ -13,6 +13,12 @@ PLOOP_PLATFORM_SETTINGS = {
 require "PLoop"(function (_ENV)
   namespace "FauxCombinator"
 
+  __Sealed__()
+  class "WrongTokenTypeException" { Exception }
+
+  __Sealed__()
+  class "EOFException" { Exception }
+
   interface "IToken" (function (_ENV)
     __Abstract__()
     function GetType()
@@ -58,9 +64,9 @@ require "PLoop"(function (_ENV)
     __Arguments__{String}(IToken/nil)
     function Expect(self, type)
        if self:IsEOF() then
-         throw("FauxCombinator: Reading past EOF")
+         throw(EOFException("EOF"))
        end
-       return self:Maybe(type) or throw("FauxCombinator: Wrong token type")
+       return self:Maybe(type) or throw(WrongTokenTypeException(type))
     end
   end)
 end)
