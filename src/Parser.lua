@@ -14,10 +14,17 @@ require "PLoop"(function (_ENV)
   namespace "FauxCombinator"
 
   __Sealed__()
-  class "WrongTokenTypeException" { Exception }
+  __Abstract__()
+  class "ParserException" { Exception }
 
   __Sealed__()
-  class "EOFException" { Exception }
+  class "WrongTokenTypeException" { ParserException }
+
+  __Sealed__()
+  class "EOFException" { ParserException }
+
+  __Sealed__()
+  class "EitherNoMatchException" { ParserException }
 
   interface "IToken" (function (_ENV)
     __Abstract__()
@@ -40,11 +47,13 @@ require "PLoop"(function (_ENV)
     property "Tokens" { type = Array[IToken] }
     field { index = 1 }
 
+    __Return__{Bool}
     function IsEOF(self)
       return self.index > #self.Tokens
     end
 
-    __Arguments__{}(IToken/nil)
+    __Arguments__{}
+    __Return__{IToken/nil}
     function Peek(self)
       if self:IsEOF() then
         return
@@ -52,7 +61,8 @@ require "PLoop"(function (_ENV)
       return self.Tokens[self.index]
     end
 
-    __Arguments__{String}(IToken/nil)
+    __Arguments__{String}
+    __Return__{IToken/nil}
     function Maybe(self, type)
       local token = self:Peek()
       if token and token:GetType() == type then
@@ -61,7 +71,8 @@ require "PLoop"(function (_ENV)
       end
     end
 
-    __Arguments__{String}(IToken/nil)
+    __Arguments__{String}
+    __Return__{IToken}
     function Expect(self, type)
       if self:IsEOF() then
         throw(EOFException("EOF"))
@@ -72,8 +83,44 @@ require "PLoop"(function (_ENV)
         self.index = self.index + 1
         return token
       else
-        throw('Expected '..type..', got '..token:GetType())
+        throw(WrongTokenTypeException('Expected '..type..', got '..token:GetType()))
       end
+    end
+
+    __Arguments__{String}
+    __Return__{Function}
+    function Expect_(self, type)
+      return function ()
+        return self:Expect(type)
+      end
+    end
+
+    __Arguments__{Function}
+    function Try(self, fn)
+      local index = self.index
+      local ok, res = pcall(fn)
+      if ok then
+        return res
+      elseif Class.IsObjectType(res, ParserException) then
+        self.index = index -- restore index
+      else
+        throw(res)
+      end
+    end
+
+    __Arguments__{String}
+    function Try(self, type)
+      return self:Try(self:Expect_(type))
+    end
+
+    __Arguments__{(Function+String) * 0}
+    __Return__{IToken}
+    function Either(self, ...)
+      for _, fn in pairs({...}) do
+        local res = self:Try(fn)
+        if res then return res end
+      end
+      throw(EitherNoMatchException("Either matched no branches"))
     end
   end)
 end)
