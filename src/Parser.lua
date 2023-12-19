@@ -63,10 +63,17 @@ require "PLoop"(function (_ENV)
 
     __Arguments__{String}(IToken/nil)
     function Expect(self, type)
-       if self:IsEOF() then
-         throw(EOFException("EOF"))
-       end
-       return self:Maybe(type) or throw(WrongTokenTypeException(type))
+      if self:IsEOF() then
+        throw(EOFException("EOF"))
+      end
+
+      local token = self:Peek()
+      if token and token:GetType() == type then
+        self.index = self.index + 1
+        return token
+      else
+        throw(WrongTokenTypeException('Expected '..type..', got '..token:GetType()))
+      end
     end
   end)
 end)
