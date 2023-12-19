@@ -72,7 +72,7 @@ require "PLoop"(function (_ENV)
         self.index = self.index + 1
         return token
       else
-        throw(WrongTokenTypeException('Expected '..type..', got '..token:GetType()))
+        throw('Expected '..type..', got '..token:GetType())
       end
     end
   end)
