@@ -5,7 +5,7 @@ end
 
 -- TODO factor this out?
 PLOOP_PLATFORM_SETTINGS = {
-  --ENV_ALLOW_GLOBAL_VAR_BE_NIL = false,
+  ENV_ALLOW_GLOBAL_VAR_BE_NIL = false,
   OBJECT_NO_RAWSEST = true,
   OBJECT_NO_NIL_ACCESS = true
 }
@@ -114,13 +114,33 @@ require "PLoop"(function (_ENV)
     end
 
     __Arguments__{(Function+String) * 0}
-    __Return__{IToken}
     function Either(self, ...)
       for _, fn in pairs({...}) do
         local res = self:Try(fn)
         if res then return res end
       end
       throw(EitherNoMatchException("Either matched no branches"))
+    end
+
+    __Arguments__{Function+String}
+    function Any(self, fn)
+      return self:Any(Object, fn)
+    end
+
+    __Arguments__{AnyType, Function+String}
+    function Any(self, arrayType, fn)
+      return Array[arrayType](function () return self:Try(fn) end)
+    end
+
+    __Arguments__{Function+String}
+    function Many(self, fn)
+      return self:Many(Object, fn)
+    end
+
+    __Arguments__{AnyType, Function+String}
+    function Many(self, arrayType, fn)
+      local fst = type(fn) == 'string' and self:Expect(fn) or fn()
+      return Array[arrayType] { fst, table.unpack(self:Any(fn)) }
     end
   end)
 end)
